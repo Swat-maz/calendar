@@ -1,0 +1,5 @@
+name: Calendar
+description: This module creates a calendar of reporting.
+type: module
+core_version_requirement: ^8 || ^9
+package: Swat
