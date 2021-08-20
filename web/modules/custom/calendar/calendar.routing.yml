@@ -1,0 +1,7 @@
+calendar_form.content:
+  path: '/calendar'
+  defaults:
+    _form: '\Drupal\calendar\Form\CalendarForm'
+    _title: ''
+  requirements:
+    _permission: 'access content'

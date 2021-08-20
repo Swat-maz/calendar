@@ -1,0 +1,4 @@
+calendar.main_menu:
+  title: 'Calendar'
+  route_name: calendar_form.content
+  menu_name: main

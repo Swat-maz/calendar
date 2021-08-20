@@ -1,0 +1,15 @@
+#calendar-form td input {
+  width: 100%;
+}
+
+/* Chrome, Safari, Edge, Opera */
+#calendar-form input::-webkit-outer-spin-button,
+#calendar-form input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+#calendar-form input[type=number] {
+  -moz-appearance: textfield;
+}
