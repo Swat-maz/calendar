@@ -12,6 +12,8 @@ class CalendarForm extends FormBase {
 
   /**
    * Get our form ID.
+   *
+   * {@inheritDoc}
    */
   public function getFormId() {
     return 'calendar_form';
@@ -19,6 +21,8 @@ class CalendarForm extends FormBase {
 
   /**
    * Function for building our form.
+   *
+   * {@inheritDoc}
    */
   public function buildForm($form, FormStateInterface $form_state) {
     $headers = [
@@ -41,21 +45,17 @@ class CalendarForm extends FormBase {
       'Q4',
       'YTD',
     ];
-
     $num_of_rows = $form_state->get('num_of_rows');
     if (empty($num_of_rows)) {
       $num_of_rows = 1;
       $form_state->set('num_of_rows', $num_of_rows);
     }
-
     $num_of_tables = $form_state->get('num_of_tables');
     if (empty($num_of_tables)) {
       $num_of_tables = 1;
       $form_state->set('num_of_tables', $num_of_tables);
     }
-
     $form['#tree'] = TRUE;
-
     $form['action']['add_row'] = [
       '#type' => 'submit',
       '#value' => 'Add Year',
@@ -67,7 +67,6 @@ class CalendarForm extends FormBase {
         'wrapper' => 'my-form-wrapper',
       ],
     ];
-
     $form['action']['add_table'] = [
       '#type' => 'submit',
       '#value' => 'Add Table',
@@ -79,7 +78,6 @@ class CalendarForm extends FormBase {
         'wrapper' => 'my-form-wrapper',
       ],
     ];
-
     $form['submit'] = [
       '#type' => 'submit',
       '#value' => 'Submit',
@@ -94,19 +92,15 @@ class CalendarForm extends FormBase {
       '#prefix' => '<div id="my-form-wrapper">',
       '#suffix' => '</div>',
     ];
-
     for ($a = 0; $a < $num_of_tables; $a++) {
       $form['wrapper'][$a] = [
         '#type' => 'table',
         '#header' => $headers,
       ];
-
       for ($i = $num_of_rows; $i > 0; $i--) {
         $yearValues = date('Y', time()) - $i + 1;
-
         for ($c = 0; $c < count($headers); $c++) {
           $var = $headers[$c];
-
           if ($var === "Year" || $var === "Q1" || $var === "Q2" || $var === "Q3" || $var === "Q4" || $var === "YTD") {
             if ($var === "Year") {
               $yearValue = date('Y', time()) - $i + 1;
@@ -168,6 +162,8 @@ class CalendarForm extends FormBase {
 
   /**
    * Check for correct data entry.
+   *
+   * {@inheritDoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     $trigeringElement = $form_state->getTriggeringElement();
@@ -188,19 +184,14 @@ class CalendarForm extends FormBase {
       ];
       $numOfTables = $form_state->getStorage()['num_of_tables'];
       $numOfRow = $form_state->getStorage()['num_of_rows'];
-
-      if ($numOfTables > 1) {
-        // витягування усіх заповнених даних в масив.
-        for ($i = 0; $i < $numOfTables; $i++) {
-          $allValues[$i] = $form_state->getUserInput()['wrapper'][$i];
-        }
+      $allValues = [];
+      for ($i = 0; $i < $numOfTables; $i++) {
+        $allValues[$i] = $form_state->getUserInput()['wrapper'][$i];
       }
       $arrayNotMatch = [];
       for ($j = 1; $j <= $numOfTables - 1; $j++) {
-
         for ($numberOfYears = 0; $numberOfYears < $numOfRow; $numberOfYears++) {
           $yearValues = date('Y', time()) - $numberOfYears;
-
           for ($i = 0; $i < count($headers); $i++) {
             $var = $headers[$i];
             if (!($allValues[0][$yearValues][$var] !== "" && $allValues[$j][$yearValues][$var] !== "") && !($allValues[0][$yearValues][$var] == "" && $allValues[$j][$yearValues][$var] == "")) {
@@ -214,25 +205,17 @@ class CalendarForm extends FormBase {
           }
         }
       }
-
       if (!empty($arrayNotMatch)) {
         return $form_state->setErrorByName('title', $this->t("Invalid"));
       }
-
       if ($numOfRow >= 1) {
-        $allValues = $form_state->getUserInput()['wrapper'][0];
-        for ($key = 1; $key <= $numOfRow * 12; $key++) {
-          $array_keys[] = $key;
-        }
-        foreach ($allValues as $values) {
+        $firstArray = [];
+        foreach ($allValues[0] as $values) {
           foreach ($values as $value) {
             $firstArray[] = $value;
           }
         }
-        for ($firstCounter = 0; $firstCounter < count($array_keys); $firstCounter++) {
-          $newAllValues[$array_keys[$firstCounter]] = $firstArray[$firstCounter];
-        }
-        $newAllValuesFiltered = array_filter($newAllValues);
+        $newAllValuesFiltered = array_filter($firstArray);
         $arrayAllValuesKeys = array_keys($newAllValuesFiltered);
         for ($k = 0; $k < count($arrayAllValuesKeys) - 1; $k++) {
           if ($arrayAllValuesKeys[$k] + 1 != $arrayAllValuesKeys[$k + 1]) {
@@ -240,33 +223,34 @@ class CalendarForm extends FormBase {
           }
         }
       }
-
       return $this->messenger()->addStatus($this->t('Valid'));
     }
   }
 
   /**
    * Calculation of quarters and years.
+   *
+   * {@inheritDoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
+  public function submitForm(array &$form, FormStateInterface $form_state): array {
     $numOfTables = $form_state->getStorage()['num_of_tables'];
     $numOfRow = $form_state->getStorage()['num_of_rows'];
     $quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
-
+    $yearArray = [];
     for ($j = $numOfRow; $j > 0; $j--) {
       $yearArray[] = date('Y', time()) - $j + 1;
     }
-
+    $allValues = [];
     for ($i = 0; $i < $numOfTables; $i++) {
       $allValues[$i] = $form_state->getUserInput()['wrapper'][$i];
     }
-
+    $chunkedArray = [];
     foreach ($allValues as $key => $tables) {
       foreach ($tables as $years) {
         $chunkedArray[$key][] = array_chunk($years, 3);
       }
     }
-
+    $quarterSumArray = [];
     foreach ($chunkedArray as $key => $tables) {
       foreach ($tables as $yearKey => $years) {
         foreach ($years as $quarterKey => $quarter) {
@@ -276,7 +260,7 @@ class CalendarForm extends FormBase {
         }
       }
     }
-
+    $yearSumArray = [];
     foreach ($quarterSumArray as $key => $tables) {
       foreach ($tables as $yearKey => $years) {
         array_sum($years) == 0 ?
@@ -284,7 +268,6 @@ class CalendarForm extends FormBase {
           $yearSumArray[$key][$yearKey] = round((array_sum($years) + 1) / 4, 2);
       }
     }
-
     foreach ($quarterSumArray as $key => $tables) {
       foreach ($tables as $yearKey => $years) {
         foreach ($years as $quarterKey => $quarter) {
@@ -293,14 +276,12 @@ class CalendarForm extends FormBase {
         }
       }
     }
-
     foreach ($yearSumArray as $key => $tables) {
       foreach ($tables as $yearKey => $years) {
         $years != 0 ? $form['wrapper'][$key][$yearArray[$yearKey]]['YTD']['#value'] = $years :
           $form['wrapper'][$key][$yearArray[$yearKey]]['YTD']['#value'] = "";
       }
     }
-
     return $form;
   }
 
